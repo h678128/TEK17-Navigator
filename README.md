@@ -10,6 +10,12 @@ Demoen har tre faner:
 
 Åpne `index.html` i nettleseren for å teste demoen.
 
+Kjør scenario-testene:
+
+```powershell
+node tests/scenario-tests.js
+```
+
 ## Struktur
 
 ```txt
