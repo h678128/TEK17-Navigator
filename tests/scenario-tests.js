@@ -55,18 +55,9 @@ function expect(label, actual, expected) {
 }
 
 // RKL examples from TEK17 § 11-2 tabell 1.
-expect("Garasje/p-hus en etasje -> RKL 1", risk("garasje-en-etasje").value, 1);
-expect("Kontor -> RKL 2", risk("kontor").value, 2);
-expect("Lager -> RKL 2", risk("lager").value, 2);
-expect("Barnehage -> RKL 3", risk("barnehage").value, 3);
-expect("Skole -> RKL 3", risk("skole").value, 3);
-expect("Bolig -> RKL 4", risk("bolig").value, 4);
-expect("Fritidsbolig -> RKL 4", risk("fritidsbolig").value, 4);
-expect("Forsamlingslokale -> RKL 5", risk("forsamlingslokale").value, 5);
-expect("Salgslokale -> RKL 5", risk("salgslokale").value, 5);
-expect("Hotell -> RKL 6", risk("hotell").value, 6);
-expect("Sykehjem/pleieinstitusjon -> RKL 6", risk("pleieinstitusjon").value, 6);
-expect("Tilrettelagt bolig -> RKL 6", risk("tilrettelagt-bolig").value, 6);
+for (const usage of data.usageTypes.filter((item) => item.riskClass)) {
+  expect(`${usage.name} -> RKL ${usage.riskClass}`, risk(usage.id).value, usage.riskClass);
+}
 
 // BKL normal table from TEK17 § 11-3 tabell 1.
 expect("RKL 1 / 1 etasje -> ingen BKL", fire("garasje-en-etasje", 1).fireResult.finalValue, null);

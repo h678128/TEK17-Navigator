@@ -36,6 +36,9 @@
               <button type="button" class="ghost-action" id="templateToggle" aria-expanded="false">
                 Vis forslag
               </button>
+              <button type="button" class="ghost-action hidden" id="allTemplatesToggle" aria-expanded="false">
+                Vis alle
+              </button>
             </div>
             <div class="template-list" id="templateList"></div>
           </aside>
@@ -50,9 +53,11 @@
               <fieldset>
                 <legend>1. Risikoklasse</legend>
 
-                <label class="inline-field" for="usageType">
+                <label class="inline-field" for="usageTypeSearch" id="usageChooser">
                   <span>Virksomhetstype</span>
-                  <select id="usageType" name="usageType"></select>
+                  <input id="usageTypeSearch" type="search" placeholder="Søk eller velg virksomhetstype" autocomplete="off" />
+                  <select id="usageType" name="usageType" class="sr-only" tabindex="-1" aria-hidden="true"></select>
+                  <div class="combobox-list hidden" id="usageTypeResults"></div>
                 </label>
 
                 <div class="criteria-grid">

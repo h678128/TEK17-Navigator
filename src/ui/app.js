@@ -14,6 +14,9 @@ let state = {
   riskResult: null,
   fireResult: null,
   measureResult: null,
+  showAllTemplates: false,
+  usageSearch: "",
+  usageResultsOpen: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -25,8 +28,42 @@ function init() {
   renderLibrary();
   applyUsagePreset("usikker");
 
-  $("usageType").addEventListener("change", (event) => applyUsagePreset(event.target.value));
+  $("usageTypeSearch").addEventListener("focus", () => {
+    state.usageResultsOpen = true;
+    state.usageSearch = "";
+    $("usageTypeSearch").value = "";
+    renderUsageCombobox();
+  });
+  $("usageTypeSearch").addEventListener("input", (event) => {
+    state.usageSearch = event.target.value;
+    state.usageResultsOpen = true;
+    renderUsageCombobox();
+  });
+  $("usageTypeSearch").addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeUsageCombobox();
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const [firstResult] = getUsageSearchResults();
+      if (state.usageSearch.trim() && firstResult) {
+        applyUsagePreset(firstResult.id);
+        $("usageTypeSearch").blur();
+      } else {
+        closeUsageCombobox();
+      }
+    }
+  });
+  $("usageTypeSearch").addEventListener("blur", () => {
+    window.setTimeout(closeUsageCombobox, 120);
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (!$("usageChooser").contains(event.target)) {
+      closeUsageCombobox();
+    }
+  });
   $("templateToggle").addEventListener("click", toggleTemplatePanel);
+  $("allTemplatesToggle").addEventListener("click", toggleAllTemplates);
   $("riskButton").addEventListener("click", classifyRisk);
   $("fireButton").addEventListener("click", classifyFire);
   $("measureButton").addEventListener("click", classifyMeasure);
@@ -57,10 +94,12 @@ function bindTabs() {
 }
 
 function renderTemplates() {
-  $("templateList").innerHTML = usageTypes
+  const visibleTemplates = usageTypes
     .filter((usage) => usage.riskClass)
+    .filter((usage) => state.showAllTemplates || usage.featured)
     .slice()
     .sort((a, b) => a.riskClass - b.riskClass || a.name.localeCompare(b.name, "no"))
+  $("templateList").innerHTML = visibleTemplates
     .map(
       (usage) => `
         <button type="button" class="template-card" data-template-id="${usage.id}">
@@ -80,6 +119,47 @@ function renderUsageOptions() {
   $("usageType").innerHTML = usageTypes
     .map((usage) => `<option value="${usage.id}">${usage.name}</option>`)
     .join("");
+  $("usageType").value = state.selectedUsage.id;
+  $("usageTypeSearch").value = state.usageResultsOpen ? state.usageSearch : state.selectedUsage.name;
+  renderUsageCombobox();
+}
+
+function renderUsageCombobox() {
+  const results = getUsageSearchResults();
+
+  const resultBox = $("usageTypeResults");
+  resultBox.classList.toggle("hidden", !state.usageResultsOpen);
+  resultBox.innerHTML = results.length
+    ? results
+        .map(
+          (usage) => `
+            <button type="button" class="combobox-option" data-usage-id="${usage.id}">
+              <span>${usage.name}</span>
+              <small>${usage.riskClass ? `RKL ${usage.riskClass}` : "Vurderes"}</small>
+            </button>
+          `,
+        )
+        .join("")
+    : `<p class="combobox-empty">Ingen treff. Velg Annet eller juster søket.</p>`;
+
+  resultBox.querySelectorAll("[data-usage-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      applyUsagePreset(button.dataset.usageId);
+      $("usageTypeSearch").blur();
+    });
+  });
+}
+
+function getUsageSearchResults() {
+  const query = state.usageSearch.trim().toLowerCase();
+  return usageTypes
+    .filter((usage) => !query || usage.name.toLowerCase().includes(query) || usage.note.toLowerCase().includes(query))
+    .slice()
+    .sort((a, b) => {
+      const riskA = a.riskClass ?? 99;
+      const riskB = b.riskClass ?? 99;
+      return riskA - riskB || a.name.localeCompare(b.name, "no");
+    });
 }
 
 function renderLibrary() {
@@ -99,9 +179,18 @@ function renderLibrary() {
 
 function applyUsagePreset(usageId) {
   const usage = usageTypes.find((item) => item.id === usageId) ?? usageTypes[0];
-  state = { selectedUsage: usage, riskResult: null, fireResult: null, measureResult: null };
+  state = {
+    ...state,
+    selectedUsage: usage,
+    riskResult: null,
+    fireResult: null,
+    measureResult: null,
+    usageSearch: "",
+    usageResultsOpen: false,
+  };
 
   $("usageType").value = usage.id;
+  $("usageTypeSearch").value = usage.name;
   Object.entries(usage.criteria).forEach(([key, value]) => {
     setBooleanChoice(key, value);
   });
@@ -157,6 +246,21 @@ function toggleTemplatePanel() {
   const isCollapsed = panel.classList.toggle("collapsed");
   $("templateToggle").textContent = isCollapsed ? "Vis forslag" : "Skjul forslag";
   $("templateToggle").setAttribute("aria-expanded", String(!isCollapsed));
+  $("allTemplatesToggle").classList.toggle("hidden", isCollapsed);
+}
+
+function closeUsageCombobox() {
+  state.usageResultsOpen = false;
+  state.usageSearch = "";
+  $("usageTypeSearch").value = state.selectedUsage.name;
+  $("usageTypeResults").classList.add("hidden");
+}
+
+function toggleAllTemplates() {
+  state.showAllTemplates = !state.showAllTemplates;
+  $("allTemplatesToggle").textContent = state.showAllTemplates ? "Vis færre" : "Vis alle";
+  $("allTemplatesToggle").setAttribute("aria-expanded", String(state.showAllTemplates));
+  renderTemplates();
 }
 
 function classifyRisk() {
