@@ -10,24 +10,33 @@
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">TEK17 Navigator</p>
-          <h1>Brannfaglig klassifisering med sporbar hjemmel</h1>
+          <h1>TEK17 Navigator</h1>
+          <p class="intro-text">
+            Brannfaglig klassifisering med sporbar hjemmel. Velg byggtype, juster kriteriene og få forslag til
+            risikoklasse, brannklasse og tiltaksklasse med begrunnelse.
+          </p>
         </div>
-        <div class="status-pill" id="flowStatus">Demo</div>
+        <div class="header-actions">
+          <nav class="tabs" aria-label="Hovedfaner">
+            <button type="button" class="tab-button active" data-tab="classify">Klassifisering</button>
+            <button type="button" class="tab-button" data-tab="advisor">TEK17-assistent</button>
+            <button type="button" class="tab-button" data-tab="library">Hjemler og fagstoff</button>
+          </nav>
+          <div class="status-pill" id="flowStatus">Demo</div>
+        </div>
       </header>
-
-      <nav class="tabs" aria-label="Hovedfaner">
-        <button type="button" class="tab-button active" data-tab="classify">Klassifisering</button>
-        <button type="button" class="tab-button" data-tab="advisor">TEK17-assistent</button>
-        <button type="button" class="tab-button" data-tab="library">Hjemler og fagstoff</button>
-      </nav>
 
       <section class="tab-panel active" id="classifyTab">
         <section class="workspace">
-          <aside class="reference-panel" aria-label="Ferdig klassifiserte byggtyper">
+          <aside class="reference-panel collapsed" aria-label="Ferdig klassifiserte byggtyper" id="templatePanel">
             <div class="panel-heading">
-              <h2>Byggtyper</h2>
-              <p>Bruk som forslag. Kriteriene avgjør når bygget avviker.</p>
+              <div>
+                <h2>Byggtyper</h2>
+                <p>Bruk som forslag. Kriteriene avgjør når bygget avviker.</p>
+              </div>
+              <button type="button" class="ghost-action" id="templateToggle" aria-expanded="false">
+                Vis forslag
+              </button>
             </div>
             <div class="template-list" id="templateList"></div>
           </aside>
@@ -42,11 +51,10 @@
               <fieldset>
                 <legend>1. Risikoklasse</legend>
 
-                <label for="projectName">Prosjektnavn</label>
-                <input id="projectName" name="projectName" type="text" value="Demo bygg" />
-
-                <label for="usageType">Virksomhetstype</label>
-                <select id="usageType" name="usageType"></select>
+                <label class="inline-field" for="usageType">
+                  <span>Virksomhetstype</span>
+                  <select id="usageType" name="usageType"></select>
+                </label>
 
                 <div class="criteria-grid">
                   <label class="choice-field" for="sporadicOccupancyOnly">
@@ -89,6 +97,13 @@
                     <select id="doesNotFitStandardType">
                       <option value="false">Standard byggtype passer</option>
                       <option value="true">Avviker fra standard byggtype</option>
+                    </select>
+                  </label>
+                  <label class="choice-field" for="singleFloorRisk">
+                    <span>Etasjeomfang</span>
+                    <select id="singleFloorRisk">
+                      <option value="false">Flere etasjer eller ikke avklart</option>
+                      <option value="true">Én etasje</option>
                     </select>
                   </label>
                 </div>

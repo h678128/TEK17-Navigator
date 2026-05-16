@@ -117,10 +117,10 @@ const usageTypes = [
     },
   },
   {
-    id: "garasje-en-etasje",
-    name: "Garasje, en etasje",
+    id: "garasje",
+    name: "Garasje",
     riskClass: 1,
-    note: "Sporadisk personopphold.",
+    note: "Sporadisk personopphold. Etasjeantall vurderes separat.",
     criteria: {
       sporadicOccupancyOnly: true,
       usersKnowEscapeRoutes: true,
@@ -131,9 +131,22 @@ const usageTypes = [
   },
   {
     id: "annet",
-    name: "Annet / usikker",
+    name: "Annet",
     riskClass: null,
-    note: "Klassifiseres etter kriteriene.",
+    note: "Brukes når virksomheten ikke finnes i listen.",
+    criteria: {
+      sporadicOccupancyOnly: false,
+      usersKnowEscapeRoutes: true,
+      usersCanSelfEvacuate: true,
+      overnightStay: false,
+      lowFireHazard: true,
+    },
+  },
+  {
+    id: "usikker",
+    name: "Usikker",
+    riskClass: null,
+    note: "Start med nøytrale kriterier og dokumenter vurderingen.",
     criteria: {
       sporadicOccupancyOnly: false,
       usersKnowEscapeRoutes: true,
@@ -229,6 +242,7 @@ function init() {
   applyUsagePreset("bolig");
 
   $("usageType").addEventListener("change", (event) => applyUsagePreset(event.target.value));
+  $("templateToggle").addEventListener("click", toggleTemplatePanel);
   $("riskButton").addEventListener("click", classifyRisk);
   $("fireButton").addEventListener("click", classifyFire);
   $("measureButton").addEventListener("click", classifyMeasure);
@@ -260,7 +274,9 @@ function bindTabs() {
 
 function renderTemplates() {
   $("templateList").innerHTML = usageTypes
-    .filter((usage) => usage.id !== "annet")
+    .filter((usage) => usage.riskClass)
+    .slice()
+    .sort((a, b) => a.riskClass - b.riskClass || a.name.localeCompare(b.name, "no"))
     .map(
       (usage) => `
         <button type="button" class="template-card" data-template-id="${usage.id}">
@@ -306,6 +322,7 @@ function applyUsagePreset(usageId) {
     setBooleanChoice(key, value);
   });
   setBooleanChoice("doesNotFitStandardType", usage.id === "annet");
+  setBooleanChoice("singleFloorRisk", usage.id === "garasje");
 
   document.querySelectorAll("[data-template-id]").forEach((button) => {
     button.classList.toggle("active", button.dataset.templateId === usage.id);
@@ -326,7 +343,15 @@ function readRiskInput() {
     overnightStay: readBooleanChoice("overnightStay"),
     lowFireHazard: readBooleanChoice("lowFireHazard"),
     doesNotFitStandardType: readBooleanChoice("doesNotFitStandardType"),
+    singleFloorRisk: readBooleanChoice("singleFloorRisk"),
   };
+}
+
+function toggleTemplatePanel() {
+  const panel = $("templatePanel");
+  const isCollapsed = panel.classList.toggle("collapsed");
+  $("templateToggle").textContent = isCollapsed ? "Vis forslag" : "Skjul forslag";
+  $("templateToggle").setAttribute("aria-expanded", String(!isCollapsed));
 }
 
 function classifyRisk() {
@@ -422,8 +447,9 @@ function describeRiskCriteria(input) {
   const selfRescue = input.usersCanSelfEvacuate ? "brukerne kan selvredde" : "brukerne kan ikke nødvendigvis selvredde";
   const overnight = input.overnightStay ? "overnatting" : "ikke overnatting";
   const fireHazard = input.lowFireHazard ? "liten brannfare" : "ikke liten / forhøyet brannfare";
+  const floorScope = input.singleFloorRisk ? "én etasje" : "flere etasjer eller ikke avklart";
 
-  return `Valgte kriterier: ${occupancy}, ${escapeKnowledge}, ${selfRescue}, ${overnight}, ${fireHazard}.`;
+  return `Valgte kriterier: ${occupancy}, ${escapeKnowledge}, ${selfRescue}, ${overnight}, ${fireHazard}, ${floorScope}.`;
 }
 
 function getCriteriaMismatches(input, preset) {
@@ -453,6 +479,10 @@ function getRiskInputWarnings(input) {
 
   if (!input.lowFireHazard && (!input.usersKnowEscapeRoutes || input.overnightStay)) {
     warnings.push("Forhøyet brannfare sammen med ukjente rømningsforhold eller overnatting passer dårlig i standardtabellen.");
+  }
+
+  if (input.usageType === "garasje" && !input.singleFloorRisk) {
+    warnings.push("Garasje er valgt uten at én etasje er bekreftet. Kontroller at risikoklasse 1 fortsatt er riktig.");
   }
 
   return warnings;
