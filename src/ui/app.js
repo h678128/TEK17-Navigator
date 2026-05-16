@@ -1,4 +1,11 @@
-const { usageTypes, legalReferences, libraryItems, fireClassTable } = window.TEK17Data;
+const {
+  usageTypes,
+  legalReferences,
+  libraryItems,
+  fireClassTable,
+  fireClassExceptions,
+  fireClassAnalysisTriggers,
+} = window.TEK17Data;
 const { classifyRisk: runRiskClassification, classifyFire: runFireClassification, classifyMeasure: runMeasureClassification } = window.TEK17Rules;
 const { answerQuestion } = window.TEK17Advisor;
 
@@ -174,6 +181,8 @@ function classifyFire() {
     state.riskResult,
     fireClassTable,
     legalReferences,
+    fireClassExceptions,
+    fireClassAnalysisTriggers,
   );
   state.measureResult = null;
   $("measureClassSection").disabled = false;
