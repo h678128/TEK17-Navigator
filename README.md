@@ -8,7 +8,53 @@ Applikasjonen har tre faner:
 - TEK17-assistent med kontrollert svarflate og kildereferanser
 - Hjemler og relevant fagstoff
 
-Åpne `index.html` i nettleseren for å teste applikasjonen lokalt.
+## Kjøre Applikasjonen
+
+TEK17 Navigator skal kunne kjøres på to måter: i nettleser og som desktop-applikasjon.
+
+### 1. Nettleser
+
+Kjør lokal server:
+
+```powershell
+npm run serve
+```
+
+Åpne deretter:
+
+```txt
+http://127.0.0.1:5173
+```
+
+Dette er anbefalt nettlesermodus fordi lokal LLM-kobling til Ollama fungerer mer forutsigbart via lokal server enn ved å åpne `index.html` direkte.
+
+### 2. Desktop-App
+
+Installer avhengigheter først:
+
+```powershell
+npm install
+```
+
+Start desktop-appen:
+
+```powershell
+npm run desktop
+```
+
+Desktop-appen bruker Electron og laster samme TEK17 Navigator-kode som nettleserversjonen.
+
+## Lokal LLM
+
+TEK17-assistenten kan bruke en lokal Ollama-modell hvis Ollama kjører på maskinen:
+
+```powershell
+ollama pull llama3.1:8b
+ollama serve
+```
+
+Appen forsøker da å bruke `http://localhost:11434/api/chat` med modellen `llama3.1:8b`.
+Hvis lokal LLM ikke er tilgjengelig, bruker assistenten automatisk den kildebaserte fallbacken i `answerBuilder.js`.
 
 Kjør testene:
 
@@ -21,7 +67,11 @@ node tests/advisor-tests.js
 
 ```txt
 TEK17-Navigator/
+├── tools/                                 - lokale utviklingsverktøy
+│   └── serve.cjs                          - enkel lokal webserver for nettlesermodus
 ├── src/                                   - all hovedkode for applikasjonen
+│   ├── desktop/                           - desktop-wrapper for Electron
+│   │   └── main.cjs                       - starter Electron-vindu og lokal statisk server
 │   ├── app/                               - nettleserapp, DOM-kobling og fanestyring
 │   │   └── main.js                        - kobler UI, klassifiseringsregler og assistent sammen
 │   ├── domain/                            - fagdomene for TEK17/SAK10-regler og data
@@ -39,11 +89,13 @@ TEK17-Navigator/
 │           ├── advisor.js                 - orkestrerer spørsmål, kildesøk og svar
 │           ├── advisorSources.js          - godkjente temaer, fagtekster og kildekoblinger
 │           ├── retrieval.js               - finner relevante kilder basert på spørsmålet
+│           ├── localLlmClient.js          - valgfri kobling mot lokal Ollama-modell
 │           └── answerBuilder.js           - bygger kildebundet svar med hjemmel
 ├── tests/                                 - scenario- og regeltester
 │   ├── scenario-tests.js                  - tester RKL, BKL og TKL-scenarioer
 │   └── advisor-tests.js                   - tester assistentens kildesøk og avgrensning
 ├── index.html                             - hovedside for TEK17 Navigator
+├── package.json                           - npm-scripts for nettleser, desktop og tester
 ├── styles.css                             - styling for applikasjonen
 └── README.md                              - prosjektbeskrivelse
 ```

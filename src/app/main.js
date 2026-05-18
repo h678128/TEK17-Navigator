@@ -613,8 +613,9 @@ function renderReasonList(reasons) {
   return reasons?.length ? `<ul class="trace-reasons">${reasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>` : "";
 }
 
-function answerAdvisorQuestion() {
-  $("advisorAnswer").innerHTML = answerQuestion($("advisorQuestion").value, legalReferences);
+async function answerAdvisorQuestion() {
+  $("advisorAnswer").innerHTML = `<p class="field-note">Henter relevante kilder og spør lokal TEK17-assistent...</p>`;
+  $("advisorAnswer").innerHTML = await answerQuestion($("advisorQuestion").value, legalReferences);
 }
 
 function setBooleanChoice(id, value) {
