@@ -1,6 +1,6 @@
 # TEK17-Navigator
 
-Statisk førsteversjon av TEK17 Navigator.
+Første produksjonsrettede versjon av TEK17 Navigator.
 
 Applikasjonen har tre faner:
 
@@ -8,7 +8,7 @@ Applikasjonen har tre faner:
 - TEK17-assistent med kontrollert svarflate og kildereferanser
 - Hjemler og relevant fagstoff
 
-Åpne `index.html` i nettleseren for å teste applikasjonen.
+Åpne `index.html` i nettleseren for å teste applikasjonen lokalt.
 
 Kjør scenario-testene:
 
@@ -19,8 +19,12 @@ node tests/scenario-tests.js
 ## Struktur
 
 ```txt
-src/data/      regeldata, byggtyper og hjemler
-src/rules/     klassifiseringslogikk
-src/advisor/   kontrollert TEK17-assistent
-src/ui/        kobling mellom DOM og regelmotor
+src/app/                  nettleserapp, DOM-kobling og fanestyring
+src/domain/data/          regeldata, byggtyper, tabeller og hjemler
+src/domain/rules/         klassifiseringslogikk for RKL, BKL og TKL
+src/features/advisor/     kontrollert TEK17-assistent
+docs/                     arkitektur og videre produktbeslutninger
+tests/                    scenario- og regeltester
 ```
+
+Se `docs/architecture.md` for målbildet for ferdig applikasjon.

@@ -4,13 +4,13 @@ global.window = global;
 
 const root = path.resolve(__dirname, "..");
 
-require(path.join(root, "src/data/buildingTypes.js"));
-require(path.join(root, "src/data/legalReferences.js"));
-require(path.join(root, "src/data/fireClassTable.js"));
-require(path.join(root, "src/data/fireClassExceptions.js"));
-require(path.join(root, "src/rules/riskClass.js"));
-require(path.join(root, "src/rules/fireClass.js"));
-require(path.join(root, "src/rules/measureClass.js"));
+require(path.join(root, "src/domain/data/buildingTypes.js"));
+require(path.join(root, "src/domain/data/legalReferences.js"));
+require(path.join(root, "src/domain/data/fireClassTable.js"));
+require(path.join(root, "src/domain/data/fireClassExceptions.js"));
+require(path.join(root, "src/domain/rules/riskClass.js"));
+require(path.join(root, "src/domain/rules/fireClass.js"));
+require(path.join(root, "src/domain/rules/measureClass.js"));
 
 const data = global.TEK17Data;
 const rules = global.TEK17Rules;

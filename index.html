@@ -11,21 +11,21 @@
       <header class="topbar">
         <div>
           <h1>TEK17 Navigator</h1>
-          <p class="intro-text">
-            Brannfaglig klassifisering med sporbar hjemmel. Velg byggtype, juster kriteriene og få forslag til
-            risikoklasse, brannklasse og tiltaksklasse med begrunnelse.
+          <p class="intro-text" id="introText">
+            Spør en kontrollert TEK17-assistent om branntekniske krav, risikoklasse, brannklasse og tiltaksklasse.
+            Svarene skal være korte, faglige og vise relevante kilder.
           </p>
         </div>
         <div class="header-actions">
           <nav class="tabs" aria-label="Hovedfaner">
-            <button type="button" class="tab-button active" data-tab="classify">Klassifisering</button>
-            <button type="button" class="tab-button" data-tab="advisor">TEK17-assistent</button>
+            <button type="button" class="tab-button active" data-tab="advisor">TEK17-assistent</button>
+            <button type="button" class="tab-button" data-tab="classify">Klassifisering</button>
             <button type="button" class="tab-button" data-tab="library">Hjemler og fagstoff</button>
           </nav>
         </div>
       </header>
 
-      <section class="tab-panel active" id="classifyTab">
+      <section class="tab-panel" id="classifyTab">
         <section class="workspace">
           <aside class="reference-panel collapsed" aria-label="Klassifiserte byggtyper" id="templatePanel">
             <div class="panel-heading">
@@ -272,7 +272,7 @@
         </section>
       </section>
 
-      <section class="tab-panel" id="advisorTab">
+      <section class="tab-panel active" id="advisorTab">
         <section class="assistant-layout">
           <div class="form-panel">
             <div class="panel-heading">
@@ -329,14 +329,14 @@
       <div id="lawContent" class="law-content"></div>
     </dialog>
 
-    <script src="src/data/buildingTypes.js"></script>
-    <script src="src/data/legalReferences.js"></script>
-    <script src="src/data/fireClassTable.js"></script>
-    <script src="src/data/fireClassExceptions.js"></script>
-    <script src="src/rules/riskClass.js"></script>
-    <script src="src/rules/fireClass.js"></script>
-    <script src="src/rules/measureClass.js"></script>
-    <script src="src/advisor/advisor.js"></script>
-    <script src="src/ui/app.js"></script>
+    <script src="src/domain/data/buildingTypes.js"></script>
+    <script src="src/domain/data/legalReferences.js"></script>
+    <script src="src/domain/data/fireClassTable.js"></script>
+    <script src="src/domain/data/fireClassExceptions.js"></script>
+    <script src="src/domain/rules/riskClass.js"></script>
+    <script src="src/domain/rules/fireClass.js"></script>
+    <script src="src/domain/rules/measureClass.js"></script>
+    <script src="src/features/advisor/advisor.js"></script>
+    <script src="src/app/main.js"></script>
   </body>
 </html>

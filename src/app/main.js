@@ -28,6 +28,14 @@ const riskCriteriaIds = [
   "lowFireHazard",
   "doesNotFitStandardType",
 ];
+const tabIntroTexts = {
+  advisor:
+    "Spør en kontrollert TEK17-assistent om branntekniske krav, risikoklasse, brannklasse og tiltaksklasse. Svarene skal være korte, faglige og vise relevante kilder.",
+  classify:
+    "Brannfaglig klassifisering med sporbar hjemmel. Velg byggtype, juster kriteriene og få forslag til risikoklasse, brannklasse og tiltaksklasse med begrunnelse.",
+  library:
+    "Samlet oversikt over lovhjemler, veiledning og fagstoff som brukes i vurderingene. Bruk fanen til å kontrollere kilder og lese videre hos DIBK.",
+};
 
 function init() {
   bindTabs();
@@ -109,6 +117,7 @@ function bindTabs() {
       document.querySelectorAll(".tab-panel").forEach((panel) => {
         panel.classList.toggle("active", panel.id === `${target}Tab`);
       });
+      $("introText").textContent = tabIntroTexts[target];
     });
   });
 }
