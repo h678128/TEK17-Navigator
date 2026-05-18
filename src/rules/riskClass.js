@@ -5,9 +5,11 @@ window.TEK17Rules.classifyRisk = function classifyRisk(input, usage, legalRefere
   const derivedValue = deriveRiskClassFromCriteria(input);
   const mismatches = usage?.criteria ? getCriteriaMismatches(input, usage.criteria) : [];
   const warnings = getRiskInputWarnings(input);
+  const manualRiskClass = Number(input.manualRiskClassOverride) || null;
   const standardMatch = Boolean(usage?.riskClass && !input.doesNotFitStandardType && mismatches.length === 0);
   let value = standardMatch ? usage.riskClass : derivedValue;
   let confidence = "preaccepted";
+  let status = "preaccepted";
 
   reasons.push(describeRiskCriteria(input));
 
@@ -15,6 +17,7 @@ window.TEK17Rules.classifyRisk = function classifyRisk(input, usage, legalRefere
     reasons.push(`${usage.name} er angitt som risikoklasse ${usage.riskClass} i TEK17-veiledningens virksomhetstabell.`);
   } else {
     confidence = "requires-assessment";
+    status = derivedValue ? "criteria-derived" : "manual-assessment";
     if (derivedValue) {
       reasons.push(`Flervalget peker mot risikoklasse ${derivedValue} etter kriteriene i TEK17 § 11-2.`);
       value = derivedValue;
@@ -46,13 +49,32 @@ window.TEK17Rules.classifyRisk = function classifyRisk(input, usage, legalRefere
     reasons.push(...warnings);
   }
 
+  if (!value && manualRiskClass) {
+    value = manualRiskClass;
+    confidence = "requires-assessment";
+    status = "manual-override";
+    reasons.push(`RKL ${manualRiskClass} er valgt manuelt for videre brannklasseberegning.`);
+  }
+
   if (!value || confidence === "requires-assessment") {
     reasons.push("Resultatet bør kontrolleres av fagperson og dokumenteres med valgt hjemmel.");
+  }
+
+  if (!value) {
+    status = "manual-assessment";
   }
 
   return {
     value,
     confidence,
+    status,
+    usageName: usage?.name ?? null,
+    standardRiskClass: usage?.riskClass ?? null,
+    derivedRiskClass: derivedValue,
+    manualRiskClass,
+    criteriaMismatches: mismatches,
+    hasDeviation: Boolean(mismatches.length || input.doesNotFitStandardType || (usage?.riskClass && derivedValue && derivedValue !== usage.riskClass)),
+    warnings,
     reasons,
     legalBasis: [legalReferences.risk],
   };

@@ -108,6 +108,30 @@
                 <button type="button" class="primary-action" id="riskButton">
                   Klassifiser risikoklasse
                 </button>
+
+                <div class="manual-risk-control hidden" id="manualRiskControl">
+                  <div>
+                    <h3>RKL for videre beregning</h3>
+                    <p>Når risikoklasse krever faglig vurdering, kan ansvarlig fagperson velge hvilken RKL som skal brukes videre til brannklasse.</p>
+                  </div>
+                  <div class="manual-risk-actions">
+                    <label for="manualRiskClass">
+                      <span>Manuelt valgt risikoklasse</span>
+                      <select id="manualRiskClass">
+                        <option value="">Velg RKL</option>
+                        <option value="1">RKL 1</option>
+                        <option value="2">RKL 2</option>
+                        <option value="3">RKL 3</option>
+                        <option value="4">RKL 4</option>
+                        <option value="5">RKL 5</option>
+                        <option value="6">RKL 6</option>
+                      </select>
+                    </label>
+                    <button type="button" class="ghost-action" id="manualRiskButton">
+                      Bruk valgt RKL videre
+                    </button>
+                  </div>
+                </div>
               </fieldset>
 
               <fieldset id="fireClassSection" disabled>

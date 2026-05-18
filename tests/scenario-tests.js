@@ -66,7 +66,12 @@ for (const usage of data.usageTypes.filter((item) => item.riskClass)) {
 }
 
 expect("Bolig med ukjente romningsforhold -> kriterier peker mot RKL 6", riskWithOverrides("bolig", { usersKnowEscapeRoutes: false }).value, 6);
+expect("Bolig med ukjente romningsforhold -> avvik fra byggtype", riskWithOverrides("bolig", { usersKnowEscapeRoutes: false }).hasDeviation, true);
+expect("Bolig med ukjente romningsforhold -> kriteriebasert status", riskWithOverrides("bolig", { usersKnowEscapeRoutes: false }).status, "criteria-derived");
 expect("Kontor med overnatting og hoy brannfare -> manuell vurdering", riskWithOverrides("kontor", { overnightStay: true }).value, null);
+expect("Kontor med overnatting og hoy brannfare -> manuell status", riskWithOverrides("kontor", { overnightStay: true }).status, "manual-assessment");
+expect("Kontor med manuell RKL etter vurdering -> bruker valgt RKL videre", riskWithOverrides("kontor", { overnightStay: true, manualRiskClassOverride: 4 }).value, 4);
+expect("Kontor med manuell RKL etter vurdering -> manuell overstyring status", riskWithOverrides("kontor", { overnightStay: true, manualRiskClassOverride: 4 }).status, "manual-override");
 
 // BKL normal table from TEK17 § 11-3 tabell 1.
 expect("RKL 1 / 1 etasje -> ingen BKL", fire("garasje-en-etasje", 1).fireResult.finalValue, null);

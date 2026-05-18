@@ -74,6 +74,7 @@ function init() {
   $("templateToggle").addEventListener("click", toggleTemplatePanel);
   $("allTemplatesToggle").addEventListener("click", toggleAllTemplates);
   $("riskButton").addEventListener("click", classifyRisk);
+  $("manualRiskButton").addEventListener("click", classifyRisk);
   $("fireButton").addEventListener("click", classifyFire);
   $("measureButton").addEventListener("click", classifyMeasure);
   $("lawButton").addEventListener("click", showLegalBasis);
@@ -221,6 +222,8 @@ function applyUsagePreset(usageId) {
 
   $("fireClassSection").disabled = true;
   $("measureClassSection").disabled = true;
+  $("manualRiskClass").value = "";
+  $("manualRiskControl").classList.add("hidden");
   $("lawButton").classList.add("hidden");
   renderResults();
 }
@@ -234,6 +237,7 @@ function readRiskInput() {
     overnightStay: readBooleanChoice("overnightStay"),
     lowFireHazard: readBooleanChoice("lowFireHazard"),
     doesNotFitStandardType: readBooleanChoice("doesNotFitStandardType"),
+    manualRiskClassOverride: $("manualRiskClass").value,
   };
 }
 
@@ -291,6 +295,7 @@ function classifyRisk() {
   state.measureResult = null;
   $("fireClassSection").disabled = !state.riskResult.value;
   $("measureClassSection").disabled = true;
+  renderManualRiskControl(state.riskResult);
   $("lawButton").classList.add("hidden");
   renderResults();
 }
@@ -333,16 +338,15 @@ function renderResults() {
   const reasons = [];
 
   if (state.riskResult) {
-    riskEl.className = `result-card ${state.riskResult.confidence === "preaccepted" ? "good" : "warn"}`;
+    riskEl.className = `result-card ${getRiskCardVariant(state.riskResult)}`;
     riskEl.innerHTML = `
       <span class="result-label">Risikoklasse</span>
       <strong>${state.riskResult.value ? `RKL ${state.riskResult.value}` : "Vurdering"}</strong>
-      <span>${state.riskResult.confidence === "preaccepted" ? "Preakseptert forslag" : "Krever begrunnelse"}</span>
+      <span class="result-status">${formatRiskStatus(state.riskResult)}</span>
+      ${renderRiskDecisionDetails(state.riskResult)}
     `;
     reasons.push(...state.riskResult.reasons);
-    $("resultHint").textContent = state.riskResult.value
-      ? "Risikoklasse er satt. Gå videre til brannklasse."
-      : "Risikoklasse må vurderes manuelt.";
+    $("resultHint").textContent = getRiskResultHint(state.riskResult);
   } else {
     riskEl.className = "result-card muted";
     riskEl.innerHTML = `<span class="result-label">Risikoklasse</span><strong>Ikke klassifisert</strong>`;
@@ -383,6 +387,57 @@ function renderResults() {
     : "<li>Velg byggtype eller start med egne kriterier.</li>";
 }
 
+function getRiskCardVariant(result) {
+  if (!result.value) return "warn";
+  return result.status === "preaccepted" ? "good" : "warn";
+}
+
+function formatRiskStatus(result) {
+  if (result.status === "preaccepted") return "Preakseptert forslag";
+  if (result.status === "manual-override") return "Manuelt valgt RKL";
+  if (result.value && result.hasDeviation) return "Avvik fra byggtype";
+  if (result.value) return "Kriteriebasert forslag";
+  return "Krever faglig vurdering";
+}
+
+function getRiskResultHint(result) {
+  if (!result.value) return "Risikoklasse må vurderes manuelt før brannklasse.";
+  if (result.status === "manual-override") return "Brannklasse kan beregnes med manuelt valgt RKL. Vurderingen bør dokumenteres.";
+  if (result.hasDeviation) return "Risikoklasse er satt fra kriteriene. Avviket bør dokumenteres før brannklasse.";
+  return "Risikoklasse er satt. Gå videre til brannklasse.";
+}
+
+function renderRiskDecisionDetails(result) {
+  if (!result.usageName && !result.derivedRiskClass && !result.criteriaMismatches?.length) return "";
+
+  const standardText = result.standardRiskClass
+    ? `${result.usageName}, normalt RKL ${result.standardRiskClass}`
+    : result.usageName ?? "Egendefinert vurdering";
+  const criteriaText = result.derivedRiskClass
+    ? `Kriteriene peker mot RKL ${result.derivedRiskClass}`
+    : "Kriteriene treffer ikke rent i tabellen";
+  const mismatchText = result.criteriaMismatches?.length
+    ? `<span>Avvik: ${result.criteriaMismatches.join(", ")}</span>`
+    : "";
+  const manualText = result.status === "manual-override"
+    ? `<span>Brukes videre: RKL ${result.value}</span>`
+    : "";
+
+  return `
+    <div class="risk-decision">
+      <span>Virksomhetstype: ${standardText}</span>
+      <span>${criteriaText}</span>
+      ${mismatchText}
+      ${manualText}
+    </div>
+  `;
+}
+
+function renderManualRiskControl(result) {
+  const shouldShow = result?.status === "manual-assessment" || result?.status === "manual-override";
+  $("manualRiskControl").classList.toggle("hidden", !shouldShow);
+}
+
 function showLegalBasis() {
   const refs = [
     ...(state.riskResult?.legalBasis ?? []),
@@ -390,20 +445,12 @@ function showLegalBasis() {
     ...(state.measureResult?.legalBasis ?? []),
   ];
   const uniqueRefs = Array.from(new Map(refs.map((item) => [item.title, item])).values());
-  const decisionReasons = [
-    ...(state.riskResult?.reasons ?? []),
-    ...(state.fireResult?.reasons ?? []),
-    ...(state.measureResult?.reasons ?? []),
-  ];
 
   $("lawContent").innerHTML = `
-    <article class="law-item">
-      <h3>Denne klassifiseringen</h3>
-      <p>Risikoklasse: ${state.riskResult?.value ? `RKL ${state.riskResult.value}` : "ikke fastsatt"}</p>
-      <p>Brannklasse: ${state.fireResult ? formatFireClass(state.fireResult.finalValue) : "ikke fastsatt"}</p>
-      <p>Tiltaksklasse: ${state.measureResult ? `TKL ${state.measureResult.value}` : "ikke vurdert"}</p>
-      <ul>${decisionReasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>
-    </article>
+    ${renderClassificationTrace()}
+    ${renderRiskLegalTrace(state.riskResult)}
+    ${renderFireLegalTrace(state.fireResult, state.riskResult)}
+    ${renderMeasureLegalTrace(state.measureResult)}
     ${uniqueRefs
       .map(
         (ref) => `
@@ -419,6 +466,102 @@ function showLegalBasis() {
   `;
 
   $("lawDialog").showModal();
+}
+
+function renderClassificationTrace() {
+  return `
+    <article class="law-item decision-trace">
+      <h3>Denne klassifiseringen</h3>
+      <div class="trace-grid">
+        ${renderTraceRow("Risikoklasse", state.riskResult?.value ? `RKL ${state.riskResult.value}` : "Ikke fastsatt")}
+        ${renderTraceRow("Brannklasse", state.fireResult ? formatFireClass(state.fireResult.finalValue) : "Ikke fastsatt")}
+        ${renderTraceRow("Tiltaksklasse", state.measureResult ? `TKL ${state.measureResult.value}` : "Ikke vurdert")}
+      </div>
+    </article>
+  `;
+}
+
+function renderRiskLegalTrace(result) {
+  if (!result) return "";
+
+  const standardText = result.standardRiskClass
+    ? `${result.usageName}, normalt RKL ${result.standardRiskClass}`
+    : result.usageName ?? "Ikke valgt";
+  const criteriaText = result.derivedRiskClass
+    ? `Kriteriene peker mot RKL ${result.derivedRiskClass}`
+    : "Kriteriene treffer ikke rent i tabellen";
+  const deviationText = result.criteriaMismatches?.length
+    ? result.criteriaMismatches.join(", ")
+    : result.hasDeviation
+      ? "Avviker fra standard byggtype"
+      : "Ingen avvik fra valgt virksomhetstype";
+
+  return `
+    <article class="law-item decision-trace">
+      <span class="tag">TEK17 § 11-2</span>
+      <h3>Risikoklassegrunnlag</h3>
+      <div class="trace-grid">
+        ${renderTraceRow("Virksomhetstype", standardText)}
+        ${renderTraceRow("Kriterier", criteriaText)}
+        ${renderTraceRow("Avvik", deviationText)}
+        ${result.status === "manual-override" ? renderTraceRow("Brukes videre", `RKL ${result.value}`) : ""}
+        ${renderTraceRow("Status", formatRiskStatus(result))}
+      </div>
+      ${renderReasonList(result.reasons)}
+    </article>
+  `;
+}
+
+function renderFireLegalTrace(result, riskResult) {
+  if (!result) return "";
+
+  const specialRule = result.matchedAnalysisTriggers?.length
+    ? "BKL 4-forhold må dokumenteres ved analyse"
+    : result.matchedException
+      ? "Unntak fra normal tabell slo inn"
+      : "Normal tabell er brukt";
+
+  return `
+    <article class="law-item decision-trace">
+      <span class="tag">TEK17 § 11-3</span>
+      <h3>Brannklassegrunnlag</h3>
+      <div class="trace-grid">
+        ${renderTraceRow("Normal tabell", `${formatFireClass(result.normalValue)} for RKL ${riskResult?.value ?? "-"} og valgt etasjeantall`)}
+        ${renderTraceRow("Særregel", specialRule)}
+        ${renderTraceRow("Resultat", formatFireClass(result.finalValue))}
+      </div>
+      ${renderReasonList(result.reasons)}
+    </article>
+  `;
+}
+
+function renderMeasureLegalTrace(result) {
+  if (!result) return "";
+
+  return `
+    <article class="law-item decision-trace">
+      <span class="tag">SAK10 §§ 9-3 og 9-4</span>
+      <h3>Tiltaksklassegrunnlag</h3>
+      <div class="trace-grid">
+        ${renderTraceRow("Resultat", `TKL ${result.value}`)}
+        ${renderTraceRow("Status", result.confidence)}
+      </div>
+      ${renderReasonList(result.reasons)}
+    </article>
+  `;
+}
+
+function renderTraceRow(label, value) {
+  return `
+    <div class="trace-row">
+      <span class="trace-label">${label}</span>
+      <span class="trace-value">${value}</span>
+    </div>
+  `;
+}
+
+function renderReasonList(reasons) {
+  return reasons?.length ? `<ul class="trace-reasons">${reasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>` : "";
 }
 
 function answerAdvisorQuestion() {
