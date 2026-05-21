@@ -37,6 +37,33 @@ function expectIncludes(label, actual, expected) {
     "Utenfor kildegrunnlaget",
   );
 
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (url, options = {}) => {
+    calls.push({ url, options });
+    if (url.endsWith("/api/tags")) {
+      return mockJsonResponse({ models: [] });
+    }
+    if (url.endsWith("/api/pull")) {
+      return mockJsonResponse({ status: "success" });
+    }
+    if (url.endsWith("/api/chat")) {
+      return mockJsonResponse({ message: { content: "Kort lokalt svar med kilde." } });
+    }
+    throw new Error(`Unexpected fetch URL: ${url}`);
+  };
+
+  advisor.localLlmConfig.enabled = true;
+  advisor.localLlmConfig.autoPull = true;
+  advisor.localLlmConfig.baseUrl = "http://ollama.test";
+  advisor.resetLocalModelCheck();
+  const localAnswer = await advisor.askLocalLlm("Hva avgjør risikoklasse?", [advisor.sources[0]], data.legalReferences);
+  advisor.localLlmConfig.enabled = false;
+  global.fetch = originalFetch;
+
+  expectIncludes("Lokal LLM laster ned manglende modell", calls.map((call) => call.url).join(" "), "/api/pull");
+  expectIncludes("Lokal LLM svar rendres", localAnswer, "Lokalt LLM-svar");
+
   for (const check of checks) {
     console.log(`${check.ok ? "PASS" : "FAIL"} | ${check.label} | expected includes=${check.expected}`);
   }
@@ -48,3 +75,11 @@ function expectIncludes(label, actual, expected) {
     process.exit(1);
   }
 })();
+
+function mockJsonResponse(payload) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => payload,
+  };
+}

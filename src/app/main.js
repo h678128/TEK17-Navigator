@@ -614,7 +614,7 @@ function renderReasonList(reasons) {
 }
 
 async function answerAdvisorQuestion() {
-  $("advisorAnswer").innerHTML = `<p class="field-note">Henter relevante kilder og spør lokal TEK17-assistent...</p>`;
+  $("advisorAnswer").innerHTML = `<p class="field-note">Henter relevante kilder og sjekker lokal LLM. Første gang kan modellen lastes ned automatisk.</p>`;
   $("advisorAnswer").innerHTML = await answerQuestion($("advisorQuestion").value, legalReferences);
 }
 

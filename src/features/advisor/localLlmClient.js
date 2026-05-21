@@ -2,15 +2,20 @@ window.TEK17Advisor = window.TEK17Advisor || {};
 
 window.TEK17Advisor.localLlmConfig = {
   enabled: true,
-  endpoint: "http://localhost:11434/api/chat",
+  baseUrl: "http://localhost:11434",
   model: "llama3.1:8b",
+  autoPull: true,
 };
+
+let localModelReadyPromise = null;
 
 window.TEK17Advisor.askLocalLlm = async function askLocalLlm(question, matchedSources, legalReferences) {
   const config = window.TEK17Advisor.localLlmConfig;
   if (!config.enabled || !matchedSources.length) return null;
 
-  const response = await fetch(config.endpoint, {
+  await ensureLocalModel(config);
+
+  const response = await fetch(`${config.baseUrl}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -43,6 +48,60 @@ window.TEK17Advisor.askLocalLlm = async function askLocalLlm(question, matchedSo
 
   return renderLocalLlmAnswer(question, content, matchedSources, legalReferences);
 };
+
+window.TEK17Advisor.ensureLocalModel = ensureLocalModel;
+window.TEK17Advisor.resetLocalModelCheck = function resetLocalModelCheck() {
+  localModelReadyPromise = null;
+};
+
+async function ensureLocalModel(config) {
+  if (!config.autoPull) return;
+
+  if (!localModelReadyPromise) {
+    localModelReadyPromise = ensureLocalModelOnce(config).catch((error) => {
+      localModelReadyPromise = null;
+      throw error;
+    });
+  }
+
+  await localModelReadyPromise;
+}
+
+async function ensureLocalModelOnce(config) {
+  if (await hasLocalModel(config)) return;
+  await pullLocalModel(config);
+}
+
+async function hasLocalModel(config) {
+  const response = await fetch(`${config.baseUrl}/api/tags`);
+  if (!response.ok) {
+    throw new Error(`Ollama svarte med HTTP ${response.status} ved modellkontroll`);
+  }
+
+  const payload = await response.json();
+  const models = payload.models ?? [];
+  return models.some((item) => isSameModel(item.name, config.model) || isSameModel(item.model, config.model));
+}
+
+async function pullLocalModel(config) {
+  const response = await fetch(`${config.baseUrl}/api/pull`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: config.model,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Ollama klarte ikke å laste ned ${config.model}. HTTP ${response.status}`);
+  }
+}
+
+function isSameModel(candidate, requested) {
+  if (!candidate) return false;
+  return candidate === requested || `${candidate}:latest` === requested || candidate === `${requested}:latest`;
+}
 
 function buildLocalPrompt(question, matchedSources, legalReferences) {
   const sourceText = matchedSources

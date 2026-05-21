@@ -49,11 +49,10 @@ Desktop-appen bruker Electron og laster samme TEK17 Navigator-kode som nettleser
 TEK17-assistenten kan bruke en lokal Ollama-modell hvis Ollama kjører på maskinen:
 
 ```powershell
-ollama pull llama3.1:8b
 ollama serve
 ```
 
-Appen forsøker da å bruke `http://localhost:11434/api/chat` med modellen `llama3.1:8b`.
+Appen sjekker lokale modeller via `http://localhost:11434/api/tags`. Hvis `llama3.1:8b` ikke finnes, forsøker appen å laste den ned automatisk via `http://localhost:11434/api/pull` før spørsmålet sendes til `http://localhost:11434/api/chat`.
 Hvis lokal LLM ikke er tilgjengelig, bruker assistenten automatisk den kildebaserte fallbacken i `answerBuilder.js`.
 
 Kjør testene:
