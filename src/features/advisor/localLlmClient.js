@@ -49,7 +49,7 @@ window.TEK17Advisor.askLocalLlm = async function askLocalLlm(question, matchedSo
   const content = payload.message?.content?.trim();
   if (!content) return null;
 
-  notifyLocalLlmStatus("ready", `Lokal LLM klar: ${config.model}`);
+  notifyLocalLlmStatus("ready", `Assistent klar med ${config.model}.`);
   return renderLocalLlmAnswer(question, content, matchedSources, legalReferences);
 };
 
@@ -57,6 +57,27 @@ window.TEK17Advisor.ensureLocalModel = ensureLocalModel;
 window.TEK17Advisor.resetLocalModelCheck = function resetLocalModelCheck() {
   localModelReadyPromise = null;
 };
+window.TEK17Advisor.checkLocalLlm = checkLocalLlm;
+window.TEK17Advisor.prepareLocalLlm = async function prepareLocalLlm() {
+  const config = window.TEK17Advisor.localLlmConfig;
+  notifyLocalLlmStatus("checking", "Sjekker Ollama og lokal modell...");
+  await ensureLocalModel(config);
+  return checkLocalLlm();
+};
+
+async function checkLocalLlm() {
+  const config = window.TEK17Advisor.localLlmConfig;
+  notifyLocalLlmStatus("checking", "Sjekker om Ollama kjører...");
+  const hasModel = await hasLocalModel(config);
+  const status = hasModel ? "ready" : "missing-model";
+  notifyLocalLlmStatus(status, hasModel ? `Assistent klar med ${config.model}.` : `${config.model} er ikke lastet ned ennå.`);
+
+  return {
+    ollamaAvailable: true,
+    modelAvailable: hasModel,
+    model: config.model,
+  };
+}
 
 async function ensureLocalModel(config) {
   if (!config.autoPull) return;
@@ -73,13 +94,13 @@ async function ensureLocalModel(config) {
 
 async function ensureLocalModelOnce(config) {
   if (await hasLocalModel(config)) {
-    notifyLocalLlmStatus("ready", `Lokal LLM klar: ${config.model}`);
+    notifyLocalLlmStatus("ready", `Assistent klar med ${config.model}.`);
     return;
   }
 
   notifyLocalLlmStatus("pulling", `Laster ned ${config.model}. Dette kan ta litt tid første gang.`);
   await pullLocalModel(config);
-  notifyLocalLlmStatus("ready", `Lokal LLM klar: ${config.model}`);
+  notifyLocalLlmStatus("ready", `Assistent klar med ${config.model}.`);
 }
 
 async function hasLocalModel(config) {

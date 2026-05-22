@@ -291,6 +291,26 @@
               <button type="button" data-question="Hva gjør jeg ved blandet bruk?">Blandet bruk</button>
             </div>
 
+            <section class="llm-onboarding" id="llmOnboarding">
+              <div>
+                <span class="tag">Lokal assistent</span>
+                <h3>Kom i gang med Ollama</h3>
+                <p id="llmOnboardingText">
+                  Nettversjonen kan bruke kildebaserte svar med en gang. For lokal LLM må Ollama være installert og kjøre på maskinen.
+                </p>
+              </div>
+              <ol class="setup-steps" id="llmSetupSteps">
+                <li data-step="install">Installer Ollama én gang på PC-en.</li>
+                <li data-step="run">Start Ollama lokalt.</li>
+                <li data-step="model">Klargjør modellen <code>llama3.1:8b</code>.</li>
+              </ol>
+              <div class="llm-actions">
+                <a class="ghost-action" href="https://ollama.com/download" target="_blank" rel="noreferrer">Last ned Ollama</a>
+                <button type="button" class="ghost-action" id="checkOllamaButton">Sjekk Ollama</button>
+                <button type="button" class="primary-action" id="prepareLlmButton">Klargjør assistent</button>
+              </div>
+            </section>
+
             <button type="button" class="primary-action" id="advisorButton">
               Spør TEK17-assistenten
             </button>

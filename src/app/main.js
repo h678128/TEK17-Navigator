@@ -36,9 +36,11 @@ const tabIntroTexts = {
   library:
     "Samlet oversikt over lovhjemler, veiledning og fagstoff som brukes i vurderingene. Bruk fanen til å kontrollere kilder og lese videre hos DIBK.",
 };
+const isLocalAssistantRuntime = window.TEK17Advisor.localLlmConfig.enabled;
 
 function init() {
   bindAdvisorStatus();
+  bindLlmOnboarding();
   bindTabs();
   bindRiskCriteria();
   renderTemplates();
@@ -89,6 +91,8 @@ function init() {
   $("lawButton").addEventListener("click", showLegalBasis);
   $("closeDialog").addEventListener("click", () => $("lawDialog").close());
   $("advisorButton").addEventListener("click", answerAdvisorQuestion);
+  $("checkOllamaButton").addEventListener("click", checkOllama);
+  $("prepareLlmButton").addEventListener("click", prepareLlm);
 
   document.querySelectorAll("[data-question]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -100,13 +104,17 @@ function init() {
 
 function bindAdvisorStatus() {
   window.TEK17Advisor.localLlmConfig.onStatus = updateAdvisorStatus;
-  const localLlmEnabled = window.TEK17Advisor.localLlmConfig.enabled;
   updateAdvisorStatus({
     kind: "idle",
-    message: localLlmEnabled
+    message: isLocalAssistantRuntime
       ? "Klar. Lokal LLM brukes hvis Ollama er tilgjengelig."
       : "Klar. Nettversjonen bruker kildebasert svar uten lokal LLM.",
   });
+}
+
+function bindLlmOnboarding() {
+  $("llmOnboarding").dataset.mode = isLocalAssistantRuntime ? "local" : "pages";
+  renderLlmSetupState(isLocalAssistantRuntime ? "unknown" : "pages");
 }
 
 function bindRiskCriteria() {
@@ -646,6 +654,97 @@ function updateAdvisorStatus(status) {
 
   statusEl.dataset.status = status.kind;
   statusEl.querySelector("p").textContent = status.message;
+
+  if (status.kind === "ready") renderLlmSetupState("ready");
+  if (status.kind === "pulling") renderLlmSetupState("pulling");
+  if (status.kind === "fallback") renderLlmSetupState(isLocalAssistantRuntime ? "ollama-missing" : "pages");
+}
+
+async function checkOllama() {
+  setLlmButtonsDisabled(true);
+  renderLlmSetupState("checking");
+
+  try {
+    const result = await window.TEK17Advisor.checkLocalLlm();
+    renderLlmSetupState(result.modelAvailable ? "ready" : "missing-model");
+  } catch (error) {
+    console.info("Ollama er ikke tilgjengelig.", error);
+    updateAdvisorStatus({
+      kind: "fallback",
+      message: isLocalAssistantRuntime
+        ? "Fant ikke Ollama. Start Ollama og prøv igjen."
+        : "Nettleseren fikk ikke kontakt med lokal Ollama. Bruk kildebasert svar eller kjør appen lokalt.",
+    });
+    renderLlmSetupState(isLocalAssistantRuntime ? "ollama-missing" : "pages");
+  } finally {
+    setLlmButtonsDisabled(false);
+  }
+}
+
+async function prepareLlm() {
+  setLlmButtonsDisabled(true);
+  renderLlmSetupState("pulling");
+
+  try {
+    await window.TEK17Advisor.prepareLocalLlm();
+    renderLlmSetupState("ready");
+  } catch (error) {
+    console.info("Klarte ikke å klargjøre lokal LLM.", error);
+    updateAdvisorStatus({
+      kind: "fallback",
+      message: isLocalAssistantRuntime
+        ? "Klarte ikke å klargjøre lokal LLM. Kontroller at Ollama kjører."
+        : "Nettversjonen kan ikke starte Ollama. Installer/start Ollama lokalt først.",
+    });
+    renderLlmSetupState(isLocalAssistantRuntime ? "ollama-missing" : "pages");
+  } finally {
+    setLlmButtonsDisabled(false);
+  }
+}
+
+function renderLlmSetupState(status) {
+  const onboarding = $("llmOnboarding");
+  const text = $("llmOnboardingText");
+  if (!onboarding || !text) return;
+
+  onboarding.dataset.status = status;
+
+  const messages = {
+    pages:
+      "Du er på nettversjonen. Klassifisering og kildebaserte svar fungerer med en gang. For lokal LLM må Ollama installeres og appen kjøres lokalt på PC-en.",
+    unknown:
+      "Sjekk om Ollama kjører. Hvis den gjør det, kan appen klargjøre modellen automatisk.",
+    checking: "Sjekker om Ollama kjører og om modellen finnes lokalt.",
+    "ollama-missing": "Ollama svarer ikke ennå. Installer Ollama hvis den mangler, eller start Ollama og prøv igjen.",
+    "missing-model": "Ollama kjører, men modellen mangler. Trykk Klargjør assistent for å laste den ned.",
+    pulling: "Modellen lastes ned eller klargjøres. Dette kan ta litt tid første gang.",
+    ready: "Lokal assistent er klar. Spørsmål kan nå besvares med lokal LLM og kildegrunnlag.",
+  };
+
+  text.textContent = messages[status] ?? messages.unknown;
+  updateSetupSteps(status);
+}
+
+function updateSetupSteps(status) {
+  const stepStates = {
+    pages: { install: "todo", run: "todo", model: "todo" },
+    unknown: { install: "todo", run: "todo", model: "todo" },
+    checking: { install: "current", run: "current", model: "todo" },
+    "ollama-missing": { install: "todo", run: "current", model: "todo" },
+    "missing-model": { install: "done", run: "done", model: "current" },
+    pulling: { install: "done", run: "done", model: "current" },
+    ready: { install: "done", run: "done", model: "done" },
+  };
+
+  const states = stepStates[status] ?? stepStates.unknown;
+  document.querySelectorAll("#llmSetupSteps [data-step]").forEach((step) => {
+    step.dataset.state = states[step.dataset.step] ?? "todo";
+  });
+}
+
+function setLlmButtonsDisabled(disabled) {
+  $("checkOllamaButton").disabled = disabled;
+  $("prepareLlmButton").disabled = disabled;
 }
 
 function setBooleanChoice(id, value) {

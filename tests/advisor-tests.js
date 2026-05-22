@@ -73,6 +73,25 @@ function expectIncludes(label, actual, expected) {
   expectIncludes("Lokal LLM svar rendres", localAnswer, "Lokalt LLM-svar");
   expectIncludes("Lokal LLM viser status", statusEvents.join(" "), "pulling");
 
+  const checkCalls = [];
+  global.fetch = async (url) => {
+    checkCalls.push(url);
+    if (url.endsWith("/api/tags")) {
+      return mockJsonResponse({ models: [{ name: "llama3.1:8b" }] });
+    }
+    throw new Error(`Unexpected fetch URL: ${url}`);
+  };
+
+  advisor.localLlmConfig.enabled = true;
+  advisor.localLlmConfig.onStatus = (event) => statusEvents.push(event.kind);
+  const checkResult = await advisor.checkLocalLlm();
+  advisor.localLlmConfig.enabled = false;
+  advisor.localLlmConfig.onStatus = null;
+  global.fetch = originalFetch;
+
+  expectIncludes("Ollama-sjekk bruker tags", checkCalls.join(" "), "/api/tags");
+  expectIncludes("Ollama-sjekk finner modell", String(checkResult.modelAvailable), "true");
+
   for (const check of checks) {
     console.log(`${check.ok ? "PASS" : "FAIL"} | ${check.label} | expected includes=${check.expected}`);
   }
