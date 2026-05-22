@@ -2,6 +2,7 @@
   "name": "tek17-navigator",
   "version": "0.1.0",
   "private": true,
+  "author": "TEK17 Navigator",
   "description": "TEK17 Navigator med lokal klassifisering og kontrollert TEK17-assistent.",
   "main": "src/desktop/main.cjs",
   "scripts": {
@@ -9,9 +10,41 @@
     "serve": "node tools/serve.cjs",
     "start": "node tools/serve.cjs",
     "desktop": "electron .",
+    "desktop:dir": "electron-builder --win --dir",
+    "desktop:build": "electron-builder --win nsis portable",
     "test": "node tests/scenario-tests.js && node tests/advisor-tests.js"
   },
   "devDependencies": {
-    "electron": "42.1.0"
+    "electron": "42.1.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "no.tek17.navigator",
+    "productName": "TEK17 Navigator",
+    "directories": {
+      "output": "dist/desktop"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "package.json",
+      "src/app/**/*",
+      "src/domain/**/*",
+      "src/features/**/*",
+      "src/desktop/**/*"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

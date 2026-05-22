@@ -52,7 +52,19 @@ Start desktop-appen:
 npm run desktop
 ```
 
-Desktop-appen bruker Electron og laster samme TEK17 Navigator-kode som nettleserversjonen.
+Desktop-appen bruker Electron og laster samme TEK17 Navigator-kode som nettleserversjonen. Ved oppstart forsøker den å starte Ollama automatisk hvis `ollama.exe` finnes på maskinen.
+
+Bygg Windows-versjon:
+
+```powershell
+npm run desktop:build
+```
+
+Ferdige filer legges i `dist/desktop/`:
+
+- `TEK17 Navigator Setup 0.1.0.exe` - installer
+- `TEK17 Navigator 0.1.0.exe` - portable versjon
+- `win-unpacked/TEK17 Navigator.exe` - upakket app for lokal testing
 
 ## Lokal LLM
 

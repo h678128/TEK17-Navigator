@@ -1,9 +1,11 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, shell } = require("electron");
+const childProcess = require("node:child_process");
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "../..");
+const ollamaPort = 11434;
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -62,6 +64,7 @@ function resolveStaticPath(pathname) {
 }
 
 async function createWindow() {
+  ensureOllamaStarted();
   const { url } = await createStaticServer();
   const window = new BrowserWindow({
     width: 1280,
@@ -77,7 +80,63 @@ async function createWindow() {
     },
   });
 
+  window.webContents.setWindowOpenHandler(({ url: targetUrl }) => {
+    shell.openExternal(targetUrl);
+    return { action: "deny" };
+  });
+
   await window.loadURL(url);
+}
+
+function ensureOllamaStarted() {
+  isOllamaReachable((isReachable) => {
+    if (isReachable) return;
+
+    const executable = findOllamaExecutable();
+    if (!executable) return;
+
+    try {
+      const child = childProcess.spawn(executable, ["serve"], {
+        detached: true,
+        stdio: "ignore",
+        windowsHide: true,
+      });
+      child.unref();
+    } catch (error) {
+      console.info("Kunne ikke starte Ollama automatisk.", error);
+    }
+  });
+}
+
+function isOllamaReachable(callback) {
+  const request = http.get(
+    {
+      host: "127.0.0.1",
+      port: ollamaPort,
+      path: "/api/tags",
+      timeout: 900,
+    },
+    (response) => {
+      response.resume();
+      callback(response.statusCode >= 200 && response.statusCode < 500);
+    },
+  );
+
+  request.on("timeout", () => {
+    request.destroy();
+    callback(false);
+  });
+  request.on("error", () => callback(false));
+}
+
+function findOllamaExecutable() {
+  const candidates = [
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Programs", "Ollama", "ollama.exe"),
+    process.env.USERPROFILE && path.join(process.env.USERPROFILE, "AppData", "Local", "Programs", "Ollama", "ollama.exe"),
+    "ollama",
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => candidate === "ollama" || fs.existsSync(candidate));
 }
 
 app.whenReady().then(createWindow);
