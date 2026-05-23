@@ -1,0 +1,65 @@
+name: Build Desktop Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag, for eksempel v0.1.0"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build desktop app
+        run: npm run desktop:build
+
+      - name: Create or update GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag_name }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          $tag = if ($env:EVENT_NAME -eq "workflow_dispatch") { $env:INPUT_TAG } else { $env:REF_NAME }
+          $setup = "dist/desktop/TEK17 Navigator Setup 0.1.0.exe"
+          $portable = "dist/desktop/TEK17 Navigator 0.1.0.exe"
+          $notes = @"
+          TEK17 Navigator desktop for Windows.
+
+          Inneholder:
+          - Installer: TEK17 Navigator Setup 0.1.0.exe
+          - Portable app: TEK17 Navigator 0.1.0.exe
+
+          Ollama må være installert for lokal LLM. Appen forsøker å starte Ollama automatisk hvis den finner ollama.exe.
+          "@
+
+          if (gh release view $tag 2>$null) {
+            gh release upload $tag $setup $portable --clobber
+          } else {
+            gh release create $tag $setup $portable --target $env:TARGET_SHA --title "TEK17 Navigator $tag" --notes $notes --latest
+          }

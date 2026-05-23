@@ -66,6 +66,8 @@ Ferdige filer legges i `dist/desktop/`:
 - `TEK17 Navigator 0.1.0.exe` - portable versjon
 - `win-unpacked/TEK17 Navigator.exe` - upakket app for lokal testing
 
+Når en tag som `v0.1.0` pushes til GitHub, bygger workflowen `Build Desktop Release` automatisk desktop-appen og legger `.exe`-filene på GitHub Releases.
+
 ## Lokal LLM
 
 TEK17-assistenten kan bruke en lokal Ollama-modell hvis Ollama kjører på maskinen:
