@@ -62,11 +62,11 @@ npm run desktop:build
 
 Ferdige filer legges i `dist/desktop/`:
 
-- `TEK17 Navigator Setup 0.1.0.exe` - installer
-- `TEK17 Navigator 0.1.0.exe` - portable versjon
+- `TEK17 Navigator Setup 0.1.1.exe` - installer
+- `TEK17 Navigator 0.1.1.exe` - portable versjon
 - `win-unpacked/TEK17 Navigator.exe` - upakket app for lokal testing
 
-Når en tag som `v0.1.0` pushes til GitHub, bygger workflowen `Build Desktop Release` automatisk desktop-appen og legger `.exe`-filene på GitHub Releases.
+Når en tag som `v0.1.1` pushes til GitHub, bygger workflowen `Build Desktop Release` automatisk desktop-appen og legger `.exe`-filene på GitHub Releases.
 
 ## Lokal LLM
 

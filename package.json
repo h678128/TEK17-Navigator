@@ -1,6 +1,6 @@
 {
   "name": "tek17-navigator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "author": "TEK17 Navigator",
   "description": "TEK17 Navigator med lokal klassifisering og kontrollert TEK17-assistent.",

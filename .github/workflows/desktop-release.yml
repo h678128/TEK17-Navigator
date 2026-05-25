@@ -46,14 +46,15 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         run: |
           $tag = if ($env:EVENT_NAME -eq "workflow_dispatch") { $env:INPUT_TAG } else { $env:REF_NAME }
-          $setup = "dist/desktop/TEK17 Navigator Setup 0.1.0.exe"
-          $portable = "dist/desktop/TEK17 Navigator 0.1.0.exe"
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $setup = "dist/desktop/TEK17 Navigator Setup $version.exe"
+          $portable = "dist/desktop/TEK17 Navigator $version.exe"
           $notes = @"
           TEK17 Navigator desktop for Windows.
 
           Inneholder:
-          - Installer: TEK17 Navigator Setup 0.1.0.exe
-          - Portable app: TEK17 Navigator 0.1.0.exe
+          - Installer: TEK17 Navigator Setup $version.exe
+          - Portable app: TEK17 Navigator $version.exe
 
           Ollama må være installert for lokal LLM. Appen forsøker å starte Ollama automatisk hvis den finner ollama.exe.
           "@
