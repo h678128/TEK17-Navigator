@@ -7,7 +7,6 @@ window.TEK17Advisor.buildAnswer = function buildAnswer(question, matchedSources,
 
   if (!matchedSources.length) {
     return `
-      <p><strong>Spørsmål:</strong> ${escapeHtml(question)}</p>
       <section>
         <h3>Utenfor kildegrunnlaget</h3>
         <p><strong>Kort svar:</strong> Dette spørsmålet treffer ikke de TEK17/SAK10-kildene som er koblet til assistenten ennå.</p>
@@ -18,7 +17,6 @@ window.TEK17Advisor.buildAnswer = function buildAnswer(question, matchedSources,
   }
 
   return `
-    <p><strong>Spørsmål:</strong> ${escapeHtml(question)}</p>
     ${matchedSources.map((source) => renderSourceAnswer(source, legalReferences)).join("")}
     ${boundaryNote()}
   `;
@@ -46,11 +44,11 @@ function getReferences(source, legalReferences) {
 }
 
 function referenceLink(ref) {
-  return `<p class="source-line"><span>Kilde</span><a href="${ref.url}" target="_blank" rel="noreferrer">${ref.title}</a></p>`;
+  return `<p class="source-line"><span>${ref.tag}</span><a href="${ref.url}" target="_blank" rel="noreferrer">${ref.title}</a></p>`;
 }
 
 function boundaryNote() {
-  return `<p class="field-note">Assistenten er avgrenset til godkjente TEK17/SAK10-kilder. Svarene skal vise referanser og markere usikkerhet når grunnlaget ikke er entydig.</p>`;
+  return `<p class="field-note">Assistenten er avgrenset til godkjente TEK17/SAK10-kilder, inkludert relevante DIBK-veiledninger. Svarene skal vise referanser og markere usikkerhet når grunnlaget ikke er entydig.</p>`;
 }
 
 function escapeHtml(value) {

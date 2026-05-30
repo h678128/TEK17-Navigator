@@ -327,15 +327,20 @@
               </div>
             </details>
 
-            <button type="button" class="primary-action" id="advisorButton">
-              Spør TEK17-assistenten
-            </button>
+            <div class="advisor-actions">
+              <button type="button" class="primary-action" id="advisorButton">
+                Spør TEK17-assistenten
+              </button>
+            </div>
           </div>
 
           <aside class="result-panel">
-            <div class="panel-heading">
-              <h2>Svar</h2>
-              <p>Svaret skal være kort, faglig og kildebundet.</p>
+            <div class="panel-heading conversation-heading">
+              <div>
+                <h2>Samtale</h2>
+                <p>Svaret skal være kort, faglig og kildebundet.</p>
+              </div>
+              <button type="button" class="ghost-action" id="clearAdvisorButton">Tøm</button>
             </div>
             <div class="assistant-status" id="advisorLlmStatus" data-status="idle">
               <span></span>

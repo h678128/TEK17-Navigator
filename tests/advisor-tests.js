@@ -32,6 +32,11 @@ function expectIncludes(label, actual, expected) {
     "Risikoklasse",
   );
   expectIncludes(
+    "Risikoklasse-spørsmål henter veiledning",
+    await advisor.answerQuestion("Hva avgjør risikoklasse for hotell?", data.legalReferences),
+    "Veiledning til TEK17 § 11-2",
+  );
+  expectIncludes(
     "BKL 4-spørsmål henter unntak/analyse-kilde",
     await advisor.answerQuestion("Når får et bygg BKL 4?", data.legalReferences),
     "Unntak og BKL 4",
@@ -72,6 +77,10 @@ function expectIncludes(label, actual, expected) {
   expectIncludes("Lokal LLM laster ned manglende modell", calls.map((call) => call.url).join(" "), "/api/pull");
   expectIncludes("Lokal LLM svar rendres", localAnswer, "Lokalt LLM-svar");
   expectIncludes("Lokal LLM viser status", statusEvents.join(" "), "pulling");
+  const chatBody = JSON.parse(calls.find((call) => call.url.endsWith("/api/chat")).options.body);
+  expectIncludes("Lokal LLM bruker kort svargrense", JSON.stringify(chatBody.options), "num_predict");
+  expectIncludes("Lokal LLM holdes varm", chatBody.keep_alive, "10m");
+  expectIncludes("Lokal LLM får veiledningskilde", chatBody.messages.map((message) => message.content).join(" "), "Veiledning");
 
   const checkCalls = [];
   global.fetch = async (url) => {

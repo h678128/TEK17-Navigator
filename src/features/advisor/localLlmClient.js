@@ -5,6 +5,14 @@ window.TEK17Advisor.localLlmConfig = {
   baseUrl: "http://localhost:11434",
   model: "llama3.1:8b",
   autoPull: true,
+  keepAlive: "10m",
+  generationOptions: {
+    temperature: 0.1,
+    top_k: 20,
+    top_p: 0.8,
+    num_ctx: 2048,
+    num_predict: 320,
+  },
   onStatus: null,
 };
 
@@ -17,27 +25,26 @@ window.TEK17Advisor.askLocalLlm = async function askLocalLlm(question, matchedSo
   notifyLocalLlmStatus("checking", "Sjekker lokal LLM og modell...");
   await ensureLocalModel(config);
 
-  notifyLocalLlmStatus("generating", "Lokal LLM skriver svar...");
+  notifyLocalLlmStatus("generating", "Lokal LLM skriver et kort svar...");
   const response = await fetch(`${config.baseUrl}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: config.model,
       stream: false,
+      keep_alive: config.keepAlive,
       messages: [
         {
           role: "system",
           content:
-            "Du er TEK17 Navigator sin lokale fagassistent. Svar kun på norsk. Bruk bare kildegrunnlaget i meldingen fra brukeren. Ikke finn på paragrafer, krav eller tall. Hvis kildegrunnlaget ikke er nok, si at spørsmålet må vurderes nærmere mot TEK17/SAK10.",
+            "Du er TEK17 Navigator sin lokale fagassistent. Svar kun på norsk. Bruk bare forskrift og veiledning som ligger i kildegrunnlaget. Ikke finn på paragrafer, krav eller tall. Hvis kildegrunnlaget ikke er nok, si at spørsmålet må vurderes nærmere mot TEK17/SAK10.",
         },
         {
           role: "user",
           content: buildLocalPrompt(question, matchedSources, legalReferences),
         },
       ],
-      options: {
-        temperature: 0.1,
-      },
+      options: config.generationOptions,
     }),
   });
 
@@ -50,7 +57,7 @@ window.TEK17Advisor.askLocalLlm = async function askLocalLlm(question, matchedSo
   if (!content) return null;
 
   notifyLocalLlmStatus("ready", `Assistent klar med ${config.model}.`);
-  return renderLocalLlmAnswer(question, content, matchedSources, legalReferences);
+  return renderLocalLlmAnswer(content, matchedSources, legalReferences);
 };
 
 window.TEK17Advisor.ensureLocalModel = ensureLocalModel;
@@ -182,7 +189,8 @@ function buildLocalPrompt(question, matchedSources, legalReferences) {
         `Kort svar: ${source.shortAnswer}`,
         `Praktisk betydning: ${source.practicalMeaning}`,
         `Vurder nærmere: ${source.assessmentNote}`,
-        `Kilder: ${refs.map((ref) => ref.title).join(", ")}`,
+        "Kilder:",
+        refs.map((ref) => `- ${ref.tag}: ${ref.title}. ${ref.summary}`).join("\n"),
       ].join("\n");
     })
     .join("\n\n");
@@ -193,19 +201,18 @@ function buildLocalPrompt(question, matchedSources, legalReferences) {
     "Kildegrunnlag:",
     sourceText,
     "",
-    "Svarstruktur:",
+    "Svar med maks 8 korte linjer:",
     "1. Kort svar",
     "2. Relevant hjemmel",
-    "3. Hva betyr dette i praksis",
+    "3. Praktisk betydning",
     "4. Når må fagperson vurdere nærmere",
   ].join("\n");
 }
 
-function renderLocalLlmAnswer(question, answer, matchedSources, legalReferences) {
+function renderLocalLlmAnswer(answer, matchedSources, legalReferences) {
   const references = uniqueReferences(matchedSources, legalReferences);
 
   return `
-    <p><strong>Spørsmål:</strong> ${escapeHtml(question)}</p>
     <section>
       <h3>Lokalt LLM-svar</h3>
       ${answer
@@ -217,7 +224,7 @@ function renderLocalLlmAnswer(question, answer, matchedSources, legalReferences)
         ${references.map(referenceLink).join("")}
       </div>
     </section>
-    <p class="field-note">Svaret er generert lokalt fra hentede TEK17/SAK10-kilder. Kontroller hjemmel ved faglig bruk.</p>
+    <p class="field-note">Svaret er generert lokalt fra hentede forskrifts- og veiledningskilder. Kontroller hjemmel ved faglig bruk.</p>
   `;
 }
 
@@ -232,7 +239,7 @@ function getReferences(source, legalReferences) {
 }
 
 function referenceLink(ref) {
-  return `<p class="source-line"><span>Kilde</span><a href="${ref.url}" target="_blank" rel="noreferrer">${ref.title}</a></p>`;
+  return `<p class="source-line"><span>${ref.tag}</span><a href="${ref.url}" target="_blank" rel="noreferrer">${ref.title}</a></p>`;
 }
 
 function escapeHtml(value) {

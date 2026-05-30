@@ -4,7 +4,7 @@ window.TEK17Advisor.sources = [
   {
     id: "tek17",
     title: "TEK17 og brannkapitlet",
-    referenceKey: "tek17",
+    referenceKeys: ["tek17", "tek17Guide"],
     topics: [
       "tek17",
       "byggteknisk forskrift",
@@ -25,7 +25,7 @@ window.TEK17Advisor.sources = [
   {
     id: "risk",
     title: "Risikoklasse",
-    referenceKey: "risk",
+    referenceKeys: ["risk", "riskGuide"],
     topics: ["risikoklasse", "rkl", "bruk", "personopphold", "rømning", "selvredning", "overnatting", "brannfare"],
     shortAnswer:
       "Risikoklasse vurderes ut fra hvordan byggverket brukes og hvilken trussel brann kan gi for liv og helse.",
@@ -37,7 +37,7 @@ window.TEK17Advisor.sources = [
   {
     id: "fire",
     title: "Brannklasse",
-    referenceKey: "fire",
+    referenceKeys: ["fire", "fireGuide"],
     topics: ["brannklasse", "bkl", "etasjer", "konsekvens", "normal tabell", "bkl 1", "bkl 2", "bkl 3"],
     shortAnswer:
       "Brannklasse uttrykker konsekvensen en brann kan få for liv, helse, samfunnsmessige interesser og miljø.",
@@ -49,7 +49,7 @@ window.TEK17Advisor.sources = [
   {
     id: "exceptions",
     title: "Unntak og BKL 4",
-    referenceKey: "exceptions",
+    referenceKeys: ["exceptions", "fireGuide"],
     topics: ["unntak", "bkl 4", "analyse", "under terreng", "samfunnsinteresser", "farlige stoffer", "kjemisk"],
     shortAnswer:
       "TEK17 § 11-3 har enkelte preaksepterte unntak og angir forhold der brannklasse 4 må vurderes.",
@@ -61,7 +61,7 @@ window.TEK17Advisor.sources = [
   {
     id: "measure",
     title: "Tiltaksklasse",
-    referenceKeys: ["measure93", "measure94"],
+    referenceKeys: ["measure93", "measure94", "measureGuide"],
     topics: ["tiltaksklasse", "tkl", "sak10", "ansvar", "prosjektering", "kontroll", "kompleksitet", "konsekvens"],
     shortAnswer:
       "Tiltaksklasse er en SAK10-vurdering av oppgaven eller fagområdet, ikke en ren TEK17-klasse for bygget.",
@@ -73,7 +73,7 @@ window.TEK17Advisor.sources = [
   {
     id: "mixed",
     title: "Blandet bruk",
-    referenceKey: "mixedUse",
+    referenceKeys: ["mixedUse", "fireGuide"],
     topics: ["blandet bruk", "flere bruk", "kombinasjon", "underliggende", "overliggende", "bruksområde"],
     shortAnswer:
       "Ved blandet bruk bør ulike bruksområder klassifiseres hver for seg før samlet brannklasse vurderes.",

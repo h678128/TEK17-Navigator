@@ -18,6 +18,7 @@ let state = {
   usageSearch: "",
   usageResultsOpen: false,
 };
+let advisorConversation = [];
 
 const $ = (id) => document.getElementById(id);
 const riskCriteriaIds = [
@@ -43,6 +44,7 @@ function init() {
   bindLlmOnboarding();
   bindTabs();
   bindRiskCriteria();
+  renderAdvisorConversation();
   renderTemplates();
   renderUsageOptions();
   renderLibrary();
@@ -91,6 +93,7 @@ function init() {
   $("lawButton").addEventListener("click", showLegalBasis);
   $("closeDialog").addEventListener("click", () => $("lawDialog").close());
   $("advisorButton").addEventListener("click", answerAdvisorQuestion);
+  $("clearAdvisorButton").addEventListener("click", clearAdvisorConversation);
   $("checkOllamaButton").addEventListener("click", checkOllama);
   $("prepareLlmButton").addEventListener("click", prepareLlm);
 
@@ -635,18 +638,107 @@ function renderReasonList(reasons) {
 }
 
 async function answerAdvisorQuestion() {
+  const question = $("advisorQuestion").value.trim();
+  if (!question) {
+    updateAdvisorStatus({
+      kind: "limited",
+      message: "Skriv inn et spørsmål først.",
+    });
+    return;
+  }
+
   $("advisorButton").disabled = true;
   updateAdvisorStatus({
     kind: "checking",
     message: "Henter relevante kilder...",
   });
-  $("advisorAnswer").innerHTML = `<p class="field-note">Henter relevante kilder og sjekker lokal LLM. Første gang kan modellen lastes ned automatisk.</p>`;
+  appendAdvisorMessage("user", question);
+  $("advisorQuestion").value = "";
+  const pendingMessageId = appendAdvisorMessage(
+    "assistant",
+    `<p class="field-note">Henter relevante kilder og sjekker lokal LLM. Første gang kan modellen lastes ned automatisk.</p>`,
+  );
+
   try {
-    const answer = await answerQuestion($("advisorQuestion").value, legalReferences);
-    $("advisorAnswer").innerHTML = answer;
+    const answer = await answerQuestion(question, legalReferences);
+    updateAdvisorMessage(pendingMessageId, answer);
+  } catch (error) {
+    console.info("TEK17-assistenten klarte ikke å svare.", error);
+    updateAdvisorMessage(
+      pendingMessageId,
+      `<p class="assistant-empty">TEK17-assistenten klarte ikke å svare akkurat nå. Kontroller lokal LLM eller prøv et smalere spørsmål.</p>`,
+    );
+    updateAdvisorStatus({
+      kind: "fallback",
+      message: "Assistenten klarte ikke å svare.",
+    });
   } finally {
     $("advisorButton").disabled = false;
   }
+}
+
+function appendAdvisorMessage(role, content) {
+  const message = {
+    id: `${Date.now()}-${advisorConversation.length}`,
+    role,
+    content,
+  };
+  advisorConversation.push(message);
+  renderAdvisorConversation();
+  return message.id;
+}
+
+function updateAdvisorMessage(id, content) {
+  advisorConversation = advisorConversation.map((message) => (message.id === id ? { ...message, content } : message));
+  renderAdvisorConversation();
+}
+
+function clearAdvisorConversation() {
+  advisorConversation = [];
+  renderAdvisorConversation();
+  updateAdvisorStatus({
+    kind: "idle",
+    message: isLocalAssistantRuntime
+      ? "Klar. Lokal LLM brukes hvis Ollama er tilgjengelig."
+      : "Klar. Nettversjonen bruker kildebasert svar uten lokal LLM.",
+  });
+}
+
+function renderAdvisorConversation() {
+  const answerEl = $("advisorAnswer");
+  if (!answerEl) return;
+
+  if (!advisorConversation.length) {
+    answerEl.innerHTML = `<p class="assistant-empty">Skriv et spørsmål for å starte en kildebundet samtale.</p>`;
+    return;
+  }
+
+  answerEl.innerHTML = advisorConversation.map(renderAdvisorMessage).join("");
+  answerEl.scrollTop = answerEl.scrollHeight;
+}
+
+function renderAdvisorMessage(message) {
+  const label = message.role === "user" ? "Du" : "TEK17-assistent";
+  const content = message.role === "user" ? `<p>${escapeHtml(message.content)}</p>` : message.content;
+
+  return `
+    <article class="chat-message ${message.role}">
+      <span class="chat-speaker">${label}</span>
+      <div class="chat-content">${content}</div>
+    </article>
+  `;
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (char) => {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    }[char];
+  });
 }
 
 function updateAdvisorStatus(status) {
