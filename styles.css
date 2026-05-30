@@ -187,7 +187,7 @@ h3 {
 .assistant-layout {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(420px, 1fr) minmax(320px, 460px);
+  grid-template-columns: minmax(300px, 0.72fr) minmax(560px, 1.28fr);
   margin: 0 auto;
   max-width: 1320px;
 }
@@ -444,8 +444,12 @@ textarea {
 }
 
 textarea {
-  min-height: 160px;
+  min-height: 124px;
   resize: vertical;
+}
+
+#advisorQuestion {
+  min-height: 132px;
 }
 
 select {
@@ -806,7 +810,8 @@ select {
   display: grid;
   gap: 12px;
   line-height: 1.55;
-  max-height: 640px;
+  max-height: min(72vh, 820px);
+  min-height: 420px;
   overflow-y: auto;
   padding: 0 4px 0 0;
 }
